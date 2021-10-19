@@ -5,7 +5,7 @@
             <div class="header">
                 <span>osu!</span>türkiye
             </div>
-            <p>osu! hesabınız ile Discord hesabınızı bağlayın!</p>
+            <p>Vincula tus cuentas para tener acceso completo al servidor de discord.</p>
             <div class="actionbar">
                 <div class="actionBtn">
                     <button @click="osuAction()">
