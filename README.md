@@ -1,8 +1,7 @@
-# osu!türkiye
+# osu!Perú Auth
 
-### Thanks to [Corsace](https://git.cartooncraft.fr/corsace/open-2020/)'s authors for inspiring us to build efficient methods and structures!
-
-This project is still under development in sub-branches, if you want to contribute you can contact us on our Discord server!
+Fork based on osu!Turkey Auth System.
+[Original project (Thank you Coderbora<3)](https://github.com/Coderbora/osuturkiye)
 
 ## Requirements
 
