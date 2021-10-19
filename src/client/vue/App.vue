@@ -3,7 +3,7 @@
         <div class="landing">
             <!--<div class="logo"></div>-->
             <div class="header">
-                <span>osu!</span>türkiye
+                <span>osu!</span>Perú
             </div>
             <p>Vincula tus cuentas para tener acceso completo al servidor de discord.</p>
             <div class="actionbar">
