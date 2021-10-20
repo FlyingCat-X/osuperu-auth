@@ -29,7 +29,8 @@
                 "taiko": "",
                 "fruits": ""
             },
-            "rankedMapper": ""
+            "rankedMapper": "",
+            "isRestricted": ""
         },
 
         "logChannel": "",

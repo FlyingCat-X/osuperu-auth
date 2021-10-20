@@ -14,6 +14,7 @@ export interface IOsuInformation extends mongoose.Types.Subdocument {
     groups: string[];
     isRankedMapper: boolean;
     username: string;
+    isRestricted: boolean;
     accessToken: string;
     refreshToken: string;
     dateAdded: Date;
@@ -73,6 +74,7 @@ const OsuInformationSchema = new mongoose.Schema({
     groups: { type: [String], default: [], required: true },
     isRankedMapper: { type: Boolean, default: false, required: true },
     username: { type: String, required: true },
+    isRestricted: { type: Boolean, default: false, required: true },
     accessToken: { type: String, required: true },
     refreshToken: { type: String, required: true },
     dateAdded: { type: Date, default: () => DateTime.now().toJSDate(), required: true },
@@ -118,14 +120,7 @@ OsuInformationSchema.methods.fetchUser = async function(this: IOsuInformation): 
     }
     const ret = await osuApi.fetchUser(undefined, this.accessToken, undefined) as OUserSchema;
 
-    if(ret.is_restricted) {
-        logger.warn(`User [${this.username}](https://osu.ppy.sh/users/${this.userId}) is not reachable from public! Delinking their Discord account.`);
-        await (this.ownerDocument() as IUser).discord.delink();
-        (this.ownerDocument() as IUser).discord = undefined;
-        await (this.ownerDocument() as mongoose.Document).save();
-        return;
-    }
-
+    this.isRestricted = ret.is_restricted;
     this.username = ret.username;
     this.playmode = ret.playmode;
     this.groups = ret.groups.map(e => e["identifier"]);
@@ -157,6 +152,11 @@ DiscordInformationSchema.methods.updateUser = async function(this: IDiscordInfor
             addArray.push(App.instance.config.discord.roles.rankedMapper);
         else
             removeArray.push(App.instance.config.discord.roles.rankedMapper);
+        
+        if ((this.ownerDocument() as IUser).osu?.isRestricted)
+            addArray.push(App.instance.config.discord.roles.isRestricted);
+        else
+            removeArray.push(App.instance.config.discord.roles.isRestricted);
 
         addArray.push(App.instance.config.discord.roles.verifiedRole);
     

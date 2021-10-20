@@ -33,7 +33,8 @@ export class Config {
                 taiko: "",
                 fruits: ""
             },
-            rankedMapper: ""
+            rankedMapper: "",
+            isRestricted: ""
         },
 
         logChannel: "",

@@ -76,11 +76,6 @@ export class ApiRouter {
             callbackURL: App.instance.config.http.publicUrl + "/api/auth/osu/callback",
         }, async (accessToken, refreshToken, profile, done) => {
             try {
-                if (profile._json.is_restricted) {
-                    passportLogger.warn(`User **[${profile._json.username}](https://osu.ppy.sh/users/${profile.id})** tried to login with restricted account.`);
-                    done(ErrorCode.BANNED as Error);
-                }
-                
                 let user = await User.findOne({ "osu.userId": profile.id });
                 if(user)
                     user.lastLogin = DateTime.now().setZone(App.instance.config.misc.timezone).toJSDate();
