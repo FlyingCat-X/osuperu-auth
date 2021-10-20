@@ -34,6 +34,8 @@
                     <p class="alt" v-if="user.deadlineDate"><Timer :deadline="user.deadlineDate"></Timer></p>
                 </div>
             </div>
+            <p class="alt">La verificación sin estar dentro del servidor aun es una característica inestable.
+                        Te recomendamos vincular tus cuentas mientras te encuentras dentro del </p> <a href="https://discord.com/invite/DF3NZFhW7U" class="alt">servidor</a>
         </div>
     </div>
 </template>
