@@ -55,7 +55,7 @@
     },
     "misc": {
         "cooldownDuration": 86400000,
-        "timezone": "Europe/Istanbul"
+        "timezone": "America/Lima"
     },
     "level_colors": {
         "info": "17A2B8",
