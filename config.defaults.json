@@ -30,7 +30,8 @@
                 "fruits": ""
             },
             "rankedMapper": "",
-            "isRestricted": ""
+            "isRestricted": "",
+            "foreigner": ""
         },
 
         "logChannel": "",
@@ -55,7 +56,8 @@
     },
     "misc": {
         "cooldownDuration": 86400000,
-        "timezone": "America/Lima"
+        "timezone": "America/Lima",
+        "defaultCountryCode": "PE"
     },
     "level_colors": {
         "info": "17A2B8",

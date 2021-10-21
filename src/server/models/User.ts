@@ -14,6 +14,7 @@ export interface IOsuInformation extends mongoose.Types.Subdocument {
     groups: string[];
     isRankedMapper: boolean;
     username: string;
+    country_code: string;
     isRestricted: boolean;
     accessToken: string;
     refreshToken: string;
@@ -74,6 +75,7 @@ const OsuInformationSchema = new mongoose.Schema({
     groups: { type: [String], default: [], required: true },
     isRankedMapper: { type: Boolean, default: false, required: true },
     username: { type: String, required: true },
+    country_code: { type: String, required: true },
     isRestricted: { type: Boolean, default: false, required: true },
     accessToken: { type: String, required: true },
     refreshToken: { type: String, required: true },
@@ -123,6 +125,7 @@ OsuInformationSchema.methods.fetchUser = async function(this: IOsuInformation): 
     this.isRestricted = ret.is_restricted;
     this.username = ret.username;
     this.playmode = ret.playmode;
+    this.country_code = ret.country_code;
     this.groups = ret.groups.map(e => e["identifier"]);
     this.isRankedMapper = ret.ranked_beatmapset_count > 0;
     await (this.ownerDocument() as mongoose.Document).save();
@@ -157,6 +160,11 @@ DiscordInformationSchema.methods.updateUser = async function(this: IDiscordInfor
             addArray.push(App.instance.config.discord.roles.isRestricted);
         else
             removeArray.push(App.instance.config.discord.roles.isRestricted);
+
+        if ((this.ownerDocument() as IUser).osu?.country_code != App.instance.config.misc.defaultCountryCode)
+            addArray.push(App.instance.config.discord.roles.foreigner)
+        else
+            removeArray.push(App.instance.config.discord.roles.foreigner)
 
         addArray.push(App.instance.config.discord.roles.verifiedRole);
     

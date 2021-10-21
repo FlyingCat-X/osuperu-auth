@@ -34,7 +34,8 @@ export class Config {
                 fruits: ""
             },
             rankedMapper: "",
-            isRestricted: ""
+            isRestricted: "",
+            foreigner: ""
         },
 
         logChannel: "",
@@ -59,7 +60,8 @@ export class Config {
     };
     public misc = {
         cooldownDuration: 24*60*60*100,
-        timezone: "Europe/Istanbul"
+        timezone: "Europe/Istanbul",
+        defaultCountryCode: "PE"
     };
     public level_colors = {
         info: "17A2B8",

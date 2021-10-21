@@ -89,6 +89,7 @@ export class ApiRouter {
         
                 user.osu.playmode = profile._json.playmode;
                 user.osu.username = profile._json.username;
+                user.osu.country_code = profile._json.country_code;
         
                 user.osu.accessToken = accessToken;
                 user.osu.refreshToken = refreshToken;
