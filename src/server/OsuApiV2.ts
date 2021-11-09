@@ -118,6 +118,6 @@ export class osuApiV2 {
     }
 }
 
-function isNumeric(val: any): boolean {
-    return !(val instanceof Array) && (val - parseFloat(val) + 1) >= 0;
+function isNumeric(val: string): boolean {
+    return ((val != null) && (val !== '') && !isNaN(Number(val.toString())));
 }
