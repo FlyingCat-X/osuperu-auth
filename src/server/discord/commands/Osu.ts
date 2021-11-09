@@ -8,18 +8,18 @@ export default <Command>{
     description: "Displays information about an player",
     options: [
         {
-            name: "userid",
+            name: "user",
             description: "osu! user id or username",
             type: "STRING",
             required: true
         }
     ],
     async call({ interaction }): Promise<CommandReturn> {
-        const userid = interaction.options.getString("userid", true);
+        const user = interaction.options.getString("user", true);
 
         try {
             const ret = (await osuApi.fetchUserPublic(
-                userid,
+                user,
                 "osu"
             )) as OUserSchema2;
             
@@ -29,7 +29,7 @@ export default <Command>{
                         {
                             author: {
                                 name: ret.username,
-                                url: "https://osu.ppy.sh/users/" + userid,
+                                url: "https://osu.ppy.sh/users/" + user,
                                 icon_url: `https://osu.ppy.sh/images/flags/${ret.country.code}.png`
                             },
                             thumbnail: {
@@ -43,7 +43,7 @@ export default <Command>{
                                          ▸ **Playcount:** ${ret.statistics.play_count} (${secondsToHours(ret.statistics.play_time)} hrs)
                                          `,
                             footer: {
-                                text: `Old usernames: ${ret.previous_usernames.join(", ") || 'The user had no other user names'}`
+                                text: `Previous usernames: ${ret.previous_usernames.join(", ") || 'The user had no other user names'}`
                             }
                         }
                     ]
