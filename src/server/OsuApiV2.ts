@@ -109,16 +109,10 @@ export class osuApiV2 {
         };
     }
 
-    static async fetchUserPublic(userid: unknown, gamemode: "osu" | "mania" | "fruits" | "taiko"): Promise<unknown> {
+    static async fetchUserPublic(userid: string, gamemode: "osu" | "mania" | "fruits" | "taiko"): Promise<unknown> {
         await this.refreshClientCredential();
-        if (isNumeric(userid)) {
-            return this.request({
-                endpoint: `/users/${userid}/${gamemode}`,
-                accessToken: App.instance.clientCredential.token,
-            });
-        }
         return this.request({
-            endpoint: `/users/${userid}/${gamemode}?key=username`,
+            endpoint: `/users/${userid}/${gamemode}${(isNumeric(userid) ? "" : "?key=username")}`,
             accessToken: App.instance.clientCredential.token,
         });
     }
