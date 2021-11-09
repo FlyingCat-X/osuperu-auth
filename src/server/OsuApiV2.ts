@@ -28,6 +28,39 @@ export interface OUserSchema {
     is_restricted: boolean
 }
 
+export interface OUserSchema2 {
+    avatar_url: string,
+    username: string,
+    playmode: "osu" | "mania" | "fruits" | "taiko",
+    country: OUserCountrySchema,
+    statistics: OUserStatisticsSchema,
+    previous_usernames: string[]
+}
+
+export interface OUserCountrySchema {
+    code: string,
+    name: string,
+}
+
+export interface OUserStatisticsSchema {
+    level: OUserLevelSchema,
+    global_rank: number,
+    pp: number,
+    hit_accuracy: number,
+    play_count: number,
+    play_time: number,
+    rank: OUserRankSchema,
+}
+
+export interface OUserLevelSchema {
+    current: number,
+    progress: number,
+}
+
+export interface OUserRankSchema {
+    country: string,
+}
+
 export class osuApiV2 {
 
     static async fetchUser(user?: string, accessToken?: string, gameMode?: string): Promise<unknown> {
@@ -76,17 +109,21 @@ export class osuApiV2 {
         };
     }
 
-    static async fetchUserPublic(userid: number): Promise<boolean> {
-        await this.refreshClientCredential(); //check for empty client credential
-        try {
-            await this.request({ endpoint: `/users/${userid}/osu?key=id`, accessToken: App.instance.clientCredential.token });
-            return true;
-        } catch (err) {
-            if(err.response?.status == "404")
-                return false;
-            else {
-                throw err;
-            }
+    static async fetchUserPublic(userid: unknown, gamemode: "osu" | "mania" | "fruits" | "taiko"): Promise<unknown> {
+        await this.refreshClientCredential();
+        if (isNumeric(userid)) {
+            return this.request({
+                endpoint: `/users/${userid}/${gamemode}`,
+                accessToken: App.instance.clientCredential.token,
+            });
         }
+        return this.request({
+            endpoint: `/users/${userid}/${gamemode}?key=username`,
+            accessToken: App.instance.clientCredential.token,
+        });
     }
+}
+
+function isNumeric(val: any): boolean {
+    return !(val instanceof Array) && (val - parseFloat(val) + 1) >= 0;
 }
