@@ -12,15 +12,42 @@ export default <Command>{
             description: "osu! user id or username",
             type: "STRING",
             required: true
+        },
+        {
+            name: "gamemode",
+            description: "Choose a osu! gamemode by clicking here",
+            type: "STRING",
+            choices: [
+                {
+                    "name": "osu!standard",
+                    "value": "osu"
+                },
+                {
+                    "name": "osu!taiko",
+                    "value": "taiko"
+                },
+                {
+                    "name": "osu!catch",
+                    "value": "fruits"
+                },
+                {
+                    "name": "osu!mania",
+                    "value": "mania"
+                }
+            ],
+            required: false
         }
     ],
     async call({ interaction }): Promise<CommandReturn> {
         const user = interaction.options.getString("user", true);
+        const gamemode = (interaction.options.getString("gamemode", false) || "osu") as "osu" | "mania" | "fruits" | "taiko";
 
         try {
+            if(!['osu', 'fruits', 'taiko', 'mania'].includes(gamemode)) return;
+            
             const ret = (await osuApi.fetchUserPublic(
                 user,
-                "osu"
+                gamemode
             )) as OUserSchema2;
             
             return {
@@ -43,7 +70,8 @@ export default <Command>{
                                          ▸ **Playcount:** ${ret.statistics.play_count} (${secondsToHours(ret.statistics.play_time)} hrs)
                                          `,
                             footer: {
-                                text: `Previous usernames: ${ret.previous_usernames.join(", ") || 'The user had no other user names'}`
+                                text: `Previous usernames: ${ret.previous_usernames.join(", ") || 'The user had no other user names'}`,
+                                icon_url: `https://raw.githubusercontent.com/ppy/osu-wiki/master/wiki/shared/mode/${(gamemode === "fruits") ? "catch" : gamemode}.png`
                             }
                         }
                     ]
