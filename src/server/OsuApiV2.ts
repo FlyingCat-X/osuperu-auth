@@ -29,6 +29,7 @@ export interface OUserSchema {
 }
 
 export interface OUserSchema2 {
+    id: number,
     avatar_url: string,
     username: string,
     playmode: "osu" | "mania" | "fruits" | "taiko",
@@ -59,6 +60,52 @@ export interface OUserLevelSchema {
 
 export interface OUserRankSchema {
     country: string,
+}
+
+export interface OUserRecentSchema {
+    accuracy: string,
+    mods: string[],
+    score: number,
+    max_combo: number,
+    statistics: ORecentStatisticsSchema,
+    rank: string,
+    created_at: Date,
+    beatmap: ORecentBeatmapSchema,
+    beatmapset: ORecentBeatmapSetSchema,
+}
+
+export interface ORecentStatisticsSchema {
+    count_50: number,
+    count_100: number,
+    count_300: number,
+    count_miss: number,
+}
+
+export interface ORecentBeatmapSchema {
+    id: number,
+    beatmapset_id: number,
+    difficulty_rating: number,
+    version: string,
+}
+
+export interface ORecentBeatmapSetSchema {
+    artist: string,
+    title: string,
+}
+
+export interface OBeatmapSchema {
+    max_combo: number,
+}
+
+export interface OBoobaComputeSchema {
+    computed_accuracy: number,
+    total: number,
+}
+
+export interface OCalculationSchema {
+    mapCompletion: number,
+    recentPP: OBoobaComputeSchema,
+    fcPP: OBoobaComputeSchema
 }
 
 export class osuApiV2 {
@@ -113,6 +160,23 @@ export class osuApiV2 {
         await this.refreshClientCredential();
         return this.request({
             endpoint: `/users/${userid}/${gamemode}${(isNumeric(userid) ? "" : "?key=username")}`,
+            accessToken: App.instance.clientCredential.token,
+        });
+    }
+
+    static async fetchUserRecentPlays(userid: number, gamemode: "osu" | "mania" | "fruits" | "taiko", limit: number, offset: number, includeFails: 0 | 1): Promise<unknown> {
+        await this.refreshClientCredential();
+        console.log(`/users/${userid}/scores/recent?include_fails=${includeFails}&mode=${gamemode}&limit=${limit}&offset=${offset}`);
+        return this.request({
+            endpoint: `/users/${userid}/scores/recent?include_fails=${includeFails}&mode=${gamemode}&limit=${limit}&offset=${offset}`,
+            accessToken: App.instance.clientCredential.token,
+        });
+    }
+
+    static async fetchBeatmap(beatmapid: number): Promise<unknown> {
+        await this.refreshClientCredential();
+        return this.request({
+            endpoint: `/beatmaps/${beatmapid}`,
             accessToken: App.instance.clientCredential.token,
         });
     }

@@ -1,0 +1,131 @@
+import { Command, CommandReturn } from "../models/ICommands";
+import { OBeatmapSchema, OCalculationSchema, osuApiV2 as osuApi, OUserRecentSchema, OUserSchema2 } from "../../OsuApiV2";
+import { osuUtil } from "../../OsuUtil";
+
+export default <Command>{
+    commandEnum: "RS",
+    defaultPermission: true,
+    name: "recent",
+    description: "Gets a recent play from a player",
+    options: [
+        {
+            name: "user",
+            description: "osu! user id or username",
+            type: "STRING",
+            required: true
+        },
+        {
+            name: "gamemode",
+            description: "Choose a osu! gamemode by clicking here",
+            type: "STRING",
+            choices: [
+                {
+                    "name": "osu!standard",
+                    "value": "osu"
+                },
+                {
+                    "name": "osu!taiko",
+                    "value": "taiko"
+                },
+                {
+                    "name": "osu!catch",
+                    "value": "fruits"
+                },
+                {
+                    "name": "osu!mania",
+                    "value": "mania"
+                }
+            ],
+            required: false
+        },
+        {
+            name: "offset",
+            description: "Get specific play number from recents",
+            type: "INTEGER",
+            required: false
+        },
+        {
+            name: "fails",
+            description: "Includes failed plays",
+            type: "NUMBER",
+            choices: [
+                {
+                    "name": "false",
+                    "value": 0
+                },
+                {
+                    "name": "true",
+                    "value": 1
+                }
+            ],
+            required: false
+        }
+    ],
+    async call({ interaction }): Promise<CommandReturn> {
+        const user = interaction.options.getString("user", true);
+        const gamemode = (interaction.options.getString("gamemode", false) || "osu") as "osu" | "mania" | "fruits" | "taiko";
+        const offset = interaction.options.getInteger("offset", false) || 0;
+        const includeFails = (interaction.options.getNumber("fails", false) || 1) as 0 | 1;
+        
+        try {
+            if (!['osu', 'fruits', 'taiko', 'mania'].includes(gamemode) || ![0, 1].includes(includeFails)) return;
+            
+            const usr = (await osuApi.fetchUserPublic(
+                user,
+                gamemode
+            )) as OUserSchema2;
+            
+            const ret = (await osuApi.fetchUserRecentPlays(
+                usr.id,
+                gamemode,
+                1,
+                offset,
+                includeFails
+            ))[0] as OUserRecentSchema;
+
+            const bmp = (await osuApi.fetchBeatmap(
+                ret.beatmap.id
+            )) as OBeatmapSchema;
+
+            const pp = (await osuUtil.calculatePP(
+                ret
+            )) as OCalculationSchema;
+
+            return {
+                message: {
+                    embeds: [
+                        {
+                            author: {
+                                name: `${ret.beatmapset.artist} - ${ret.beatmapset.title} [${ret.beatmap.version}] ${(ret.mods.length > 0) ? "+" + ret.mods.join(" ,") : ""} [${ret.beatmap.difficulty_rating}★]`,
+                                url: `https://osu.ppy.sh/b/${ret.beatmap.id}`,
+                                icon_url: usr.avatar_url
+                            },
+                            thumbnail: {
+                                url: `https://b.ppy.sh/thumb/${ret.beatmap.beatmapset_id}.jpg`
+                            },
+                            description: `
+                                         ▸ **${pp.recentPP.total.toFixed(2)}pp** (${pp.fcPP.total.toFixed(2)}pp for ${pp.fcPP.computed_accuracy.toFixed(2)}% FC) ▸ ${pp.recentPP.computed_accuracy.toFixed(2)}%
+                                         ▸ ${numberWithCommas(ret.score)} ▸ x${ret.max_combo}/${bmp.max_combo} ▸ [${ret.statistics.count_300}/${ret.statistics.count_100}/${ret.statistics.count_50}/${ret.statistics.count_miss}]
+                                         ▸ **Map completion:** ${pp.mapCompletion.toFixed(2)}
+                                         `,
+                            footer: {
+                                text: `Played on ${ret.created_at}`,
+                                icon_url: `https://raw.githubusercontent.com/ppy/osu-wiki/master/wiki/shared/mode/${(gamemode === "fruits") ? "catch" : gamemode}.png`
+                            }
+                        }
+                    ]
+                }
+            };
+        } catch (e) {
+            return {
+                message: {
+                    content: "Error: " + e.message
+                }
+            }
+        }
+    },
+};
+
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+}
