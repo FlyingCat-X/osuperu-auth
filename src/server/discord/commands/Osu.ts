@@ -64,7 +64,7 @@ export default <Command>{
             } else {
                 return {
                     message: {
-                        content: "You don't have any osu account linked"
+                        content: "The user doesn't have any osu account linked"
                     }
                 }
             }
@@ -75,7 +75,7 @@ export default <Command>{
                     gamemode
                 )) as OUserSchema2;
             }
-            
+
             return {
                 message: {
                     embeds: [
