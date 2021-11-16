@@ -58,7 +58,7 @@ export default <Command>{
             let ret: OUserSchema2;
             if (userDb) {
                 ret = (await osuApi.fetchUserPublic(
-                    userDb.osu.userId + "",
+                    userDb.osu.userId.toString(),
                     userDb.osu.playmode as "osu" | "mania" | "fruits" | "taiko"
                 )) as OUserSchema2;
             } else {
