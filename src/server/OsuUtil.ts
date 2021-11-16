@@ -2,7 +2,6 @@ import * as ojsama from "ojsama";
 import * as booba from "booba";
 import axios from "axios";
 import { OBoobaComputeSchema, OCalculationSchema, OUserRecentSchema } from "./OsuApiV2";
-import Osu from "./discord/commands/Osu";
 
 export class osuUtil {
     static async calculatePP(recent: OUserRecentSchema, gamemode: "osu" | "mania" | "fruits" | "taiko"): Promise<OCalculationSchema> {
