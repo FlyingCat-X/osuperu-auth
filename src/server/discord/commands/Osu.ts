@@ -1,5 +1,6 @@
 import { Command, CommandReturn } from "../models/ICommands";
 import { osuApiV2 as osuApi, OUserSchema2 } from "../../OsuApiV2";
+import { User } from "../../models/User";
 
 export default <Command>{
     commandEnum: "OSU",
@@ -11,7 +12,7 @@ export default <Command>{
             name: "user",
             description: "osu! user id or username",
             type: "STRING",
-            required: true
+            required: false
         },
         {
             name: "gamemode",
@@ -36,19 +37,44 @@ export default <Command>{
                 }
             ],
             required: false
+        },
+        {
+            name: "discord",
+            description: "Choose a linked discord user",
+            type: "USER",
+            required: false
         }
     ],
     async call({ interaction }): Promise<CommandReturn> {
-        const user = interaction.options.getString("user", true);
+        const user = interaction.options.getString("user", false);
         const gamemode = (interaction.options.getString("gamemode", false) || "osu") as "osu" | "mania" | "fruits" | "taiko";
+        const guildMember = interaction.options.getUser("discord", false) || interaction.member.user;
 
         try {
             if(!['osu', 'fruits', 'taiko', 'mania'].includes(gamemode)) return;
             
-            const ret = (await osuApi.fetchUserPublic(
-                user,
-                gamemode
-            )) as OUserSchema2;
+            const userDb = await User.findOne({ "discord.userId": guildMember.id });
+            
+            let ret: OUserSchema2;
+            if (userDb) {
+                ret = (await osuApi.fetchUserPublic(
+                    userDb.osu.userId + "",
+                    userDb.osu.playmode as "osu" | "mania" | "fruits" | "taiko"
+                )) as OUserSchema2;
+            } else {
+                return {
+                    message: {
+                        content: "You don't have any osu account linked"
+                    }
+                }
+            }
+
+            if (user) {
+                ret = (await osuApi.fetchUserPublic(
+                    user,
+                    gamemode
+                )) as OUserSchema2;
+            }
             
             return {
                 message: {
