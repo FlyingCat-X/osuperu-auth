@@ -103,6 +103,7 @@ export interface OBoobaComputeSchema {
 }
 
 export interface OCalculationSchema {
+    convertedStars: number,
     mapCompletion: number,
     recentPP: OBoobaComputeSchema,
     fcPP: OBoobaComputeSchema
@@ -164,7 +165,7 @@ export class osuApiV2 {
         });
     }
 
-    static async fetchUserRecentPlays(userid: number, gamemode: "osu" | "mania" | "fruits" | "taiko", limit: number, offset: number, includeFails: 0 | 1): Promise<unknown> {
+    static async fetchUserRecentPlays(userid: number, gamemode: "osu" | "mania" | "fruits" | "taiko", limit: number, offset: number, includeFails:"0" | "1"): Promise<unknown> {
         await this.refreshClientCredential();
         console.log(`/users/${userid}/scores/recent?include_fails=${includeFails}&mode=${gamemode}&limit=${limit}&offset=${offset}`);
         return this.request({

@@ -57,10 +57,12 @@ export class CommandManager extends BaseManager {
     }
 
     async handleInteractions(interaction: CommandInteraction): Promise<void> {
+        await interaction.deferReply();
+
         const command = this.commands.find(command => command.name === interaction.commandName);
         const commandReturn = await command.call({ interaction });
 
-        interaction.reply(commandReturn.message);
+        interaction.editReply(commandReturn.message);
 
         if(commandReturn.edit_promise) {
             Promise.resolve(commandReturn.edit_promise).then(edit => {
