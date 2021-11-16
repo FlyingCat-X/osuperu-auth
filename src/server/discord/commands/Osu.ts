@@ -82,7 +82,7 @@ export default <Command>{
                         {
                             author: {
                                 name: ret.username,
-                                url: "https://osu.ppy.sh/users/" + user,
+                                url: "https://osu.ppy.sh/users/" + ret.id,
                                 icon_url: `https://osu.ppy.sh/images/flags/${ret.country.code}.png`
                             },
                             thumbnail: {

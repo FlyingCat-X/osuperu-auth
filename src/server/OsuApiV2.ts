@@ -30,6 +30,7 @@ export interface OUserSchema {
 
 export interface OUserSchema2 {
     avatar_url: string,
+    id: number,
     username: string,
     playmode: "osu" | "mania" | "fruits" | "taiko",
     country: OUserCountrySchema,
