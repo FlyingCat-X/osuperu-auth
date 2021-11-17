@@ -46,22 +46,15 @@ export default <Command>{
         }
     ],
     async call({ interaction }): Promise<CommandReturn> {
-        const user = interaction.options.getString("user", false);
-        const gamemode = (interaction.options.getString("gamemode", false) || "osu") as "osu" | "mania" | "fruits" | "taiko";
-        const guildMember = interaction.options.getUser("discord", false) || interaction.member.user;
-
         try {
-            if(!['osu', 'fruits', 'taiko', 'mania'].includes(gamemode)) return;
-            
+            const guildMember = interaction.options.getUser("discord", false) || interaction.member.user;
             const userDb = await User.findOne({ "discord.userId": guildMember.id });
+            const user = interaction.options.getString("user", false) || (userDb ? userDb.osu.userId.toString() : null);
+            const gamemode = (interaction.options.getString("gamemode", false) || (userDb ? userDb.osu.playmode : "osu")) as "osu" | "mania" | "fruits" | "taiko";
+
+            if (!['osu', 'fruits', 'taiko', 'mania'].includes(gamemode)) return;
             
-            let ret: OUserSchema2;
-            if (userDb) {
-                ret = (await osuApi.fetchUserPublic(
-                    userDb.osu.userId.toString(),
-                    userDb.osu.playmode as "osu" | "mania" | "fruits" | "taiko"
-                )) as OUserSchema2;
-            } else {
+            if (!userDb) {
                 return {
                     message: {
                         content: "The user doesn't have any osu account linked"
@@ -69,12 +62,10 @@ export default <Command>{
                 }
             }
 
-            if (user) {
-                ret = (await osuApi.fetchUserPublic(
-                    user,
-                    gamemode
-                )) as OUserSchema2;
-            }
+            const ret = (await osuApi.fetchUserPublic(
+                user,
+                gamemode
+            )) as OUserSchema2;
 
             return {
                 message: {
