@@ -167,7 +167,6 @@ export class osuApiV2 {
 
     static async fetchUserRecentPlays(userid: number, gamemode: "osu" | "mania" | "fruits" | "taiko", limit: number, offset: number, includeFails:"0" | "1"): Promise<unknown> {
         await this.refreshClientCredential();
-        console.log(`/users/${userid}/scores/recent?include_fails=${includeFails}&mode=${gamemode}&limit=${limit}&offset=${offset}`);
         return this.request({
             endpoint: `/users/${userid}/scores/recent?include_fails=${includeFails}&mode=${gamemode}&limit=${limit}&offset=${offset}`,
             accessToken: App.instance.clientCredential.token,

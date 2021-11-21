@@ -4,6 +4,9 @@ import axios from "axios";
 import { OBoobaComputeSchema, OCalculationSchema, OUserRecentSchema } from "./OsuApiV2";
 
 export class osuUtil {
+    static diffReductionsMods: string[] = ["EZ", "NF"];
+    static diffIncreaseMods: string[] = ["HR", "DT", "NC"];
+
     static async calculatePP(recent: OUserRecentSchema, gamemode: "osu" | "mania" | "fruits" | "taiko"): Promise<OCalculationSchema> {
         const osuFile = await axios.get(`https://osu.ppy.sh/osu/${recent.beatmap.id}`, { responseType: 'blob' });
 
@@ -11,18 +14,21 @@ export class osuUtil {
         const parsedBeatmap = parser.map;
 
         let boobaCalc;
+        let stars;
         switch (gamemode) {
-            case "osu": boobaCalc = new booba.std_ppv2().setPerformance(recent); break;
-            case "mania": throw new Error("Not yet implemented");
-            case "fruits": throw new Error("Not yet implemented");
-            case "taiko": throw new Error("Not yet implemented");
+            case "osu": {
+                boobaCalc = new booba.std_ppv2().setPerformance(recent);
+                stars = new ojsama.diff().calc({
+                    map: parser.map,
+                    mods: ojsama.modbits.from_string(recent.mods.join(""))
+                });
+                break;
+            }
+            case "taiko": boobaCalc = new booba.taiko_ppv2().setPerformance(recent); break;
+            case "fruits": boobaCalc = new booba.catch_ppv2().setPerformance(recent); break;
+            case "mania": boobaCalc = new booba.mania_ppv2().setPerformance(recent); break;
             default: throw new Error("You have entered an incorrect gamemode");
         }
-
-        const stars = new ojsama.diff().calc({
-            map: parser.map,
-            mods: ojsama.modbits.from_string(recent.mods.join(""))
-        });
         
         const recentPP = await boobaCalc.compute() as OBoobaComputeSchema;
         const fcPP = await boobaCalc.compute(true) as OBoobaComputeSchema;
@@ -43,7 +49,7 @@ export class osuUtil {
         }
 
         return {
-            convertedStars: stars.total,
+            convertedStars: (stars == null) ? stars : stars.total,
             mapCompletion: (recent.rank === "F") ? mapCompletion : 100,
             recentPP: recentPP,
             fcPP: fcPP

@@ -1,6 +1,7 @@
 import { Command, CommandReturn } from "../models/ICommands";
 import { OBeatmapSchema, OCalculationSchema, osuApiV2 as osuApi, OUserRecentSchema, OUserSchema2 } from "../../OsuApiV2";
 import { osuUtil } from "../../OsuUtil";
+import { User } from "../../models/User";
 
 export default <Command>{
     commandEnum: "RS",
@@ -12,7 +13,7 @@ export default <Command>{
             name: "user",
             description: "osu! user id or username",
             type: "STRING",
-            required: true
+            required: false
         },
         {
             name: "gamemode",
@@ -62,13 +63,23 @@ export default <Command>{
         }
     ],
     async call({ interaction }): Promise<CommandReturn> {
-        const user = interaction.options.getString("user", true);
-        const gamemode = (interaction.options.getString("gamemode", false) || "osu") as "osu" | "mania" | "fruits" | "taiko";
-        const offset = interaction.options.getInteger("offset", false) || 0;
-        const includeFails = (interaction.options.getString("fails", false) || "1") as "0" | "1";
-        
         try {
+            const guildMember = interaction.options.getUser("discord", false) || interaction.member.user;
+            const userDb = await User.findOne({ "discord.userId": guildMember.id });
+            const user = interaction.options.getString("user", false) || (userDb ? userDb.osu.userId.toString() : null);
+            const gamemode = (interaction.options.getString("gamemode", false) || "osu") as "osu" | "mania" | "fruits" | "taiko";
+            const offset = interaction.options.getInteger("offset", false) || 0;
+            const includeFails = (interaction.options.getString("fails", false) || "1") as "0" | "1";
+        
             if (!['osu', 'fruits', 'taiko', 'mania'].includes(gamemode) || !["0", "1"].includes(includeFails)) return;
+
+            if (!userDb) {
+                return {
+                    message: {
+                        content: "The user doesn't have any osu account linked"
+                    }
+                }
+            }
             
             const usr = (await osuApi.fetchUserPublic(
                 user,
@@ -82,6 +93,14 @@ export default <Command>{
                 offset,
                 includeFails
             ))[0] as OUserRecentSchema;
+
+            if (ret == null) {
+                return {
+                    message: {
+                        content: "`" + usr.username + "` has no recent plays for `" + gamemode + "`"
+                    }
+                }
+            }
 
             const bmp = (await osuApi.fetchBeatmap(
                 ret.beatmap.id
@@ -97,7 +116,7 @@ export default <Command>{
                     embeds: [
                         {
                             author: {
-                                name: `${ret.beatmapset.artist} - ${ret.beatmapset.title} [${ret.beatmap.version}] ${(ret.mods.length > 0) ? "+" + ret.mods.join("") : ""} [${pp.convertedStars.toFixed(2)}★]`,
+                                name: `${ret.beatmapset.artist} - ${ret.beatmapset.title} [${ret.beatmap.version}] ${(ret.mods.length > 0) ? "+" + ret.mods.join("") : ""} [${(gamemode === "osu") ? pp.convertedStars.toFixed(2) : ret.beatmap.difficulty_rating}★]`,
                                 url: `https://osu.ppy.sh/b/${ret.beatmap.id}`,
                                 icon_url: usr.avatar_url
                             },
