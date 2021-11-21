@@ -29,7 +29,6 @@ export interface OUserSchema {
 }
 
 export interface OUserSchema2 {
-    id: number,
     avatar_url: string,
     id: number,
     username: string,
