@@ -16,6 +16,12 @@ export default <Command>{
             required: false
         },
         {
+            name: "discord",
+            description: "Choose a linked discord user",
+            type: "USER",
+            required: false
+        },
+        {
             name: "gamemode",
             description: "Choose a osu! gamemode by clicking here",
             type: "STRING",
