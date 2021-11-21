@@ -4,9 +4,6 @@ import axios from "axios";
 import { OBoobaComputeSchema, OCalculationSchema, OUserRecentSchema } from "./OsuApiV2";
 
 export class osuUtil {
-    static diffReductionsMods: string[] = ["EZ", "NF"];
-    static diffIncreaseMods: string[] = ["HR", "DT", "NC"];
-
     static async calculatePP(recent: OUserRecentSchema, gamemode: "osu" | "mania" | "fruits" | "taiko"): Promise<OCalculationSchema> {
         const osuFile = await axios.get(`https://osu.ppy.sh/osu/${recent.beatmap.id}`, { responseType: 'blob' });
 
