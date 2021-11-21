@@ -32,10 +32,16 @@ export interface OUserSchema2 {
     avatar_url: string,
     id: number,
     username: string,
+    kudosu: OKudosuSchema,
     playmode: "osu" | "mania" | "fruits" | "taiko",
     country: OUserCountrySchema,
     statistics: OUserStatisticsSchema,
-    previous_usernames: string[]
+    previous_usernames: string[],
+    graveyard_beatmapset_count: number,
+    loved_beatmapset_count: number,
+    pending_beatmapset_count: number,
+    ranked_and_approved_beatmapset_count: number,
+    unranked_beatmapset_count: number
 }
 
 export interface OUserCountrySchema {
@@ -60,6 +66,35 @@ export interface OUserLevelSchema {
 
 export interface OUserRankSchema {
     country: string,
+}
+
+export interface OKudosuSchema {
+    total: number,
+    available: number
+}
+
+export interface OBeatmapSetSchema {
+    id: number,
+    artist: string,
+    title: string,
+    bpm: number,
+    ranked_date: Date
+    beatmaps: OBeatmapSchema
+}
+
+export interface OBeatmapSchema {
+    beatmapset_id: number,
+    difficulty_rating: number,
+    id: number,
+    mode: string,
+    status: string,
+    version: string,
+    accuracy: number,
+    ar: number,
+    bpm: number,
+    cs: number,
+    drain: number,
+    url: string
 }
 
 export class osuApiV2 {
@@ -115,6 +150,14 @@ export class osuApiV2 {
         return this.request({
             endpoint: `/users/${userid}/${gamemode}${(isNumeric(userid) ? "" : "?key=username")}`,
             accessToken: App.instance.clientCredential.token,
+        });
+    }
+
+    static async fetchBeatmapSets(userid: string, type: "graveyard" | "loved" | "pending" | "ranked", limit: number, offset: number): Promise<unknown> {
+        await this.refreshClientCredential();
+        return this.request({
+            endpoint: `/users/${userid}/beatmapsets/${type}&limit=${limit}&offset=${offset}`,
+            accessToken: App.instance.clientCredential.token
         });
     }
 }
