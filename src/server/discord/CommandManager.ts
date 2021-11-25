@@ -61,12 +61,6 @@ export class CommandManager extends BaseManager {
 
         const command = this.commands.find(command => command.name === interaction.commandName);
 
-        console.log(interaction.commandName);
-        console.log(interaction.channelId);
-        console.log(App.instance.config.discord.mapperCommandsWhitelist);
-        console.log(interaction.commandName !== "mappingstats");
-        console.log(interaction.channelId !== App.instance.config.discord.mapperCommandsWhitelist);
-        
         // Hardcoded until discord implements the use of slash commands only in certain channels
         if ((interaction.commandName === "mappingstats" && interaction.channelId === App.instance.config.discord.mapperCommandsWhitelist)
                 || (interaction.channelId !== App.instance.config.discord.mapperCommandsWhitelist)) {
