@@ -19,6 +19,12 @@ export default <Command>{
             required: false
         },
         {
+            name: "offset",
+            description: "Get another page of the list. (First page = 0) This option only works if you choose a type",
+            type: "INTEGER",
+            required: false
+        },
+        {
             name: "user",
             description: "osu! user id or username",
             type: "STRING",
@@ -37,6 +43,7 @@ export default <Command>{
             const userDb = await User.findOne({ "discord.userId": guildMember.id });
             const user = interaction.options.getString("user", false) || (userDb ? userDb.osu.userId.toString() : null);
             const type = interaction.options.getString("type", false) as "graveyard" | "loved" | "pending" | "ranked";
+            const offset = interaction.options.getInteger("offset", false) || 0;
 
             if (!userDb) {
                 return {
@@ -77,26 +84,74 @@ export default <Command>{
                     }
                 }
             } else {
-                /*
                 const bmpSet = (await osuApi.fetchBeatmapSets(
-                    user,
+                    ret.id,
                     type,
                     5,
-                    1
-                )) as OBeatmapSetSchema;
-                */
+                    offset
+                )) as OBeatmapSetSchema[];
+
+                let bmpDescription = "";
+                bmpSet.forEach(bmp => {
+                    bmpDescription += "▸ [" + bmp.artist + " - " + bmp.title + "](" + "https://osu.ppy.sh/beatmapsets/" + bmp.id + ")\n";
+                    bmpDescription += "**Difficulties:** " + bmp.beatmaps.length + "\n";
+                    bmpDescription += "**Total length:** " + timeConversion(bmp.beatmaps[0].total_length * 1000) + "\n";
+                    bmpDescription += "**BPM: **" + bmp.beatmaps[0].bpm + "\n";
+                });
+
                 return {
                     message: {
-                        content: 'Feature not implemented'
+                        embeds: [
+                            {
+                                author: {
+                                    name: `Showing ${ret.username}'s beatmapsets (Page ${offset}) | ${capitalizeFirstLetter(type)}`,
+                                    url: "https://osu.ppy.sh/users/" + ret.id,
+                                    icon_url: `https://osu.ppy.sh/images/flags/${ret.country.code}.png`
+                                },
+                                thumbnail: {
+                                    url: ret.avatar_url
+                                },
+                                description: bmpDescription
+                            }
+                        ]
                     }
                 }
             }
         } catch (e) {
             return {
                 message: {
-                    content: "The user doesn't exist"
+                    content: "Error: " + e.message
                 }
             }
         }
     },
 };
+
+function timeConversion(duration: number) {
+    const portions: string[] = [];
+  
+    const msInHour = 1000 * 60 * 60;
+    const hours = Math.trunc(duration / msInHour);
+    if (hours > 0) {
+      portions.push(hours + ' hours');
+      duration = duration - (hours * msInHour);
+    }
+  
+    const msInMinute = 1000 * 60;
+    const minutes = Math.trunc(duration / msInMinute);
+    if (minutes > 0) {
+      portions.push(minutes + ' minutes');
+      duration = duration - (minutes * msInMinute);
+    }
+  
+    const seconds = Math.trunc(duration / 1000);
+    if (seconds > 0) {
+      portions.push(seconds + ' seconds');
+    }
+  
+    return portions.join(' ');
+}
+
+function capitalizeFirstLetter(text: string) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
