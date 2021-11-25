@@ -60,15 +60,29 @@ export class CommandManager extends BaseManager {
         await interaction.deferReply();
 
         const command = this.commands.find(command => command.name === interaction.commandName);
-        const commandReturn = await command.call({ interaction });
 
-        interaction.editReply(commandReturn.message);
+        console.log(interaction.commandName);
+        console.log(interaction.channelId);
+        console.log(App.instance.config.discord.mapperCommandsWhitelist);
+        console.log(interaction.commandName !== "mappingstats");
+        console.log(interaction.channelId !== App.instance.config.discord.mapperCommandsWhitelist);
+        
+        // Hardcoded until discord implements the use of slash commands only in certain channels
+        if ((interaction.commandName === "mappingstats" && interaction.channelId === App.instance.config.discord.mapperCommandsWhitelist)
+                || (interaction.channelId !== App.instance.config.discord.mapperCommandsWhitelist)) {
+            const commandReturn = await command.call({ interaction });
 
-        if(commandReturn.edit_promise) {
-            Promise.resolve(commandReturn.edit_promise).then(edit => {
-                interaction.editReply(edit.message);
-            })
+            interaction.editReply(commandReturn.message);
+    
+            if(commandReturn.edit_promise) {
+                Promise.resolve(commandReturn.edit_promise).then(edit => {
+                    interaction.editReply(edit.message);
+                })
+            }
+        } else {
+            interaction.editReply("You cannot use this command in this channel");
         }
+        
     }
 
     getAppCommand(commandEnum: string): ApplicationCommand {

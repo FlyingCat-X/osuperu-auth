@@ -37,6 +37,7 @@ export class Config {
             isRestricted: "",
             foreigner: ""
         },
+        mapperCommandsWhitelist: "",
 
         logChannel: "",
 
