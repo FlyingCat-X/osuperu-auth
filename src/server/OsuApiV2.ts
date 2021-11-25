@@ -76,10 +76,12 @@ export interface OKudosuSchema {
 export interface OBeatmapSetSchema {
     id: number,
     artist: string,
+    artist_unicode: string,
     title: string,
+    title_unicode: string,
     bpm: number,
     ranked_date: Date
-    beatmaps: OBeatmapSchema
+    beatmaps: OBeatmapSchema[]
 }
 
 export interface OBeatmapSchema {
@@ -88,6 +90,7 @@ export interface OBeatmapSchema {
     id: number,
     mode: string,
     status: string,
+    total_length: number,
     version: string,
     accuracy: number,
     ar: number,
@@ -153,10 +156,10 @@ export class osuApiV2 {
         });
     }
 
-    static async fetchBeatmapSets(userid: string, type: "graveyard" | "loved" | "pending" | "ranked", limit: number, offset: number): Promise<unknown> {
+    static async fetchBeatmapSets(userid: number, type: "graveyard" | "loved" | "pending" | "ranked", limit: number, offset: number): Promise<unknown> {
         await this.refreshClientCredential();
         return this.request({
-            endpoint: `/users/${userid}/beatmapsets/${type}&limit=${limit}&offset=${offset}`,
+            endpoint: `/users/${userid}/beatmapsets/${type}?limit=${limit}&offset=${offset}`,
             accessToken: App.instance.clientCredential.token
         });
     }
