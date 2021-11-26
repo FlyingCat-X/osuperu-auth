@@ -6,6 +6,7 @@ import { LogEntry } from "winston";
 
 import { PermissionsManager } from "./PermissionsManager";
 import { CommandManager } from "./CommandManager";
+import { MessageManager } from './MessageManager';
 
 export class DiscordClient { 
 
@@ -13,11 +14,13 @@ export class DiscordClient {
     logChannel!: discord.TextChannel;
     permissionsManager: PermissionsManager;
     commandManager: CommandManager;
+    messageManager: MessageManager;
 
     constructor() {
         this.discordClient = new discord.Client({ intents: [discord.Intents.FLAGS.GUILDS, discord.Intents.FLAGS.GUILD_MESSAGES] });
         this.commandManager = new CommandManager();
         this.permissionsManager = new PermissionsManager();
+        this.messageManager = new MessageManager();
         this.discordClient.on("ready", () => {
             if(process.env.NODE_ENV !== "development") {
                 this.commandManager.init();
@@ -29,6 +32,10 @@ export class DiscordClient {
             if(!interaction.isCommand()) return;
 
             await this.commandManager.handleInteractions(interaction);
+        })
+
+        this.discordClient.on("messageCreate", async message => {
+            await this.messageManager.handleMappingTimestamp(message);
         })
     }
 
