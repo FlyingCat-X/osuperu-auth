@@ -23,9 +23,9 @@ export class MessageManager {
                         embeds: [
                             {
                                 thumbnail: {
-                                    url: usr.avatar_url
+                                    url: (userDb) ? usr.avatar_url : message.author.avatarURL()
                                 },
-                                title: `${message.author.username} (${message.author.tag}) | osu! IGN: ${usr.username}`,
+                                title: `${message.author.username} (${message.author.tag}) ${(userDb) ? "| osu! IGN: " + usr.username : ""}`,
                                 description:
                                     "**osu! Link:** <osu://edit/" + match[1].replace(" ", "-") + ">\n" +
                                     "**Comments:** " + (match[2] || "None")
