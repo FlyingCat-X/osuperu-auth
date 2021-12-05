@@ -147,6 +147,48 @@ export interface OCalculationSchema {
     fcPP: OBoobaComputeSchema
 }
 
+export interface OMatchesSchema {
+    events: OMatchEventSchema[],
+    match?: OMatchSchema,
+    users: OUserSchema2[]
+}
+
+export interface OMatchSchema {
+    name: string
+}
+
+export interface OMatchEventSchema {
+    id: number,
+    detail: OEventDetailSchema,
+    timestamp: Date,
+    game: OEventGameSchema
+}
+
+export interface OEventDetailSchema {
+    type: string,
+    text: string,
+}
+
+export interface OEventGameSchema {
+    team_type: string,
+    beatmap: OBeatmapSchema,
+    scores: OGameScoreSchema[]
+}
+
+export interface OGameScoreSchema {
+    user_id: number,
+    accuracy: number,
+    mods: string[],
+    score: number,
+    max_combo: number,
+    passed: boolean,
+    match: OScoreMatchSchema
+}
+
+export interface OScoreMatchSchema {
+    team: string
+}
+
 export class osuApiV2 {
 
     static async fetchUser(user?: string, accessToken?: string, gameMode?: string): Promise<unknown> {
@@ -223,6 +265,14 @@ export class osuApiV2 {
         await this.refreshClientCredential();
         return this.request({
             endpoint: `/beatmaps/${beatmapid}`,
+            accessToken: App.instance.clientCredential.token,
+        });
+    }
+
+    static async fetchMatch(matchid: number, before?: number): Promise<unknown> {
+        await this.refreshClientCredential();
+        return this.request({
+            endpoint: `/matches/${matchid}${(before === undefined) ? "" : "?before=" + before}`,
             accessToken: App.instance.clientCredential.token,
         });
     }
