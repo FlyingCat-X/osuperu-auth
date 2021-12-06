@@ -1,8 +1,7 @@
 import { Command, CommandReturn } from "../models/ICommands";
-import { OMatchesSchema, osuApiV2 as osuApi, OUserSchema2 } from "../../OsuApiV2";
+import { MatchEventType, MatchTeam, MatchTeamType, OMatchesSchema, osuApiV2 as osuApi, OUserSchema2 } from "../../OsuApiV2";
 
 /**
- * TODO:
  * While I was implementing the BathBot formula, I found a difference between the formula and its implementation in the BathBot (osuplus) code. 
  * I don't know if this was intentional or a mistake
  * Formula: https://imgur.com/7KFwcUS
@@ -58,7 +57,7 @@ export default <Command>{
                     }
                 }
             } else {
-                if (match.events[0].detail.type !== "match-created") {
+                if (match.events[0].detail.type !== MatchEventType.MatchCreated) {
                     let partMatch: OMatchesSchema = {
                         events: [], 
                         users: []
@@ -71,7 +70,7 @@ export default <Command>{
                         for (const event of partMatch.events.reverse()) {
                             match.events.unshift(event);
                         }
-                    } while (match.events[0].detail.type !== "match-created")
+                    } while (match.events[0].detail.type !== MatchEventType.MatchCreated)
                 }
             }
 
@@ -93,7 +92,7 @@ export default <Command>{
                 };
                 if (Object.prototype.hasOwnProperty.call(event, "game")) {
                     if (isTeamVersus === null) {
-                        if (event.game.team_type === "team-vs") {
+                        if (event.game.team_type === MatchTeamType.TeamVS) {
                             isTeamVersus = true;
                         } else {
                             isTeamVersus = false;
@@ -107,12 +106,12 @@ export default <Command>{
                         countPlayer++;
                         sumScores += score.score;
                         scores.push(score.score);
-                        teamScore[score.match.team as "blue" | "red" | "none"] += score.score;
+                        teamScore[score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None] += score.score;
                         userStats.push({
                             userID: score.user_id,
                             mapID: event.game.beatmap.beatmapset_id,
                             score: score.score,
-                            team: score.match.team as "blue" | "red" | "none"
+                            team: score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None
                         });
                         
                         const tempMods = score.mods.filter(e => e !== "NF");
@@ -179,22 +178,22 @@ export default <Command>{
 
             let msgResult = "";
             if (isTeamVersus) {
-                const blueTeam = matchCost.filter(m => m.team === "blue");
-                const redTeam = matchCost.filter(m => m.team === "red");
+                const blueTeam = matchCost.filter(m => m.team === MatchTeam.Blue);
+                const redTeam = matchCost.filter(m => m.team === MatchTeam.Red);
                 
                 msgResult += "**Final score:** :blue_circle: " + teamResults.blue + " - " + teamResults.red + " :red_circle:\n\n"
                 msgResult += ":blue_circle: **Blue Team** :blue_circle:\n"
                 blueTeam.forEach((score, index) => {
-                    msgResult += "**" + index + ": **" + ((score.username) ? score.username : score.userID) + " - **" + score.value.toFixed(2) + "** " + ((score.isMVP) ? ":first_place:" : "") + "\n"
+                    msgResult += "**" + (index + 1) + ": **" + ((score.username) ? score.username : score.userID) + " - **" + score.value.toFixed(2) + "** " + ((score.isMVP) ? ":first_place:" : "") + "\n"
                 });
 
                 msgResult += "\n:red_circle: **Red Team** :red_circle:\n"
                 redTeam.forEach((score, index) => {
-                    msgResult += "**" + index + ": **" + ((score.username) ? score.username: score.userID) + " - **" + score.value.toFixed(2) + "** " + ((score.isMVP) ? ":first_place:" : "") + "\n"
+                    msgResult += "**" + (index + 1) + ": **" + ((score.username) ? score.username: score.userID) + " - **" + score.value.toFixed(2) + "** " + ((score.isMVP) ? ":first_place:" : "") + "\n"
                 });
             } else {
                 matchCost.forEach((score, index) => {
-                    msgResult += "**" + index + ": **" + ((score.username) ? score.username : score.userID) + " - **" + score.value.toFixed(2) + "** " + ((score.isMVP) ? ":first_place:" : "") + "\n"
+                    msgResult += "**" + (index + 1) + ": **" + ((score.username) ? score.username : score.userID) + " - **" + score.value.toFixed(2) + "** " + ((score.isMVP) ? ":first_place:" : "") + "\n"
                 });
             }
             
@@ -211,7 +210,11 @@ export default <Command>{
                 }
             }
         } catch (e) {
-            console.log(e);
+            return {
+                message: {
+                    content: "Error: " + e.message
+                }
+            }
         }
     }
 }
@@ -221,7 +224,7 @@ function matchCostsOsuplus(userStats: OUserStatsSchema[], userList: OUserListSch
     userList.forEach(user => {
         const scores = userStats.filter(u => u.userID === user.userID);
         let scoresCalculation = 0;
-        let team: "blue" | "red" | "none";
+        let team: MatchTeam.Blue | MatchTeam.Red | MatchTeam.None;
 
         scores.forEach(score => {
             scoresCalculation += score.calculatedValue;
@@ -244,7 +247,7 @@ function matchCostsBathBot(userStats: OUserStatsSchema[], userList: OUserListSch
     userList.forEach(user => {
         const scores = userStats.filter(u => u.userID === user.userID);
         let scoresCalculation = 0;
-        let team: "blue" | "red" | "none";
+        let team: MatchTeam.Blue | MatchTeam.Red | MatchTeam.None;
 
         scores.forEach(score => {
             scoresCalculation += score.calculatedValue;
@@ -279,7 +282,7 @@ function matchCostsFlashlight(userStats: OUserStatsSchema[], userList: OUserList
     userList.forEach(user => {
         const scores = userStats.filter(u => u.userID === user.userID);
         let scoresCalculation = 0;
-        let team: "blue" | "red" | "none";
+        let team: MatchTeam.Blue | MatchTeam.Red | MatchTeam.None;
 
         scores.forEach(score => {
             scoresCalculation += score.calculatedValue2;
@@ -313,7 +316,7 @@ interface OUserStatsSchema {
     userID: number,
     mapID: number,
     score: number,
-    team: "blue" | "red" | "none",
+    team: MatchTeam.Blue | MatchTeam.Red | MatchTeam.None,
     calculatedValue?: number,
     calculatedValue2?: number,
     participation?: number

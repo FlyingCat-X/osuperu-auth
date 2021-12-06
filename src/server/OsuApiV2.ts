@@ -189,6 +189,27 @@ export interface OScoreMatchSchema {
     team: string
 }
 
+export enum MatchEventType {
+    MatchCreated = "match-created",
+    MatchDisbanded = "match-disbanded",
+    Other = "other",
+    PlayerJoined = "player-joined",
+    PlayerLeft = "player-left"
+}
+
+export enum MatchTeamType {
+    OneVS = "one-vs",
+    TeamVS = "team-vs",
+    HeadToHead = "head-to-head",
+    Unknown = "unknown"
+}
+
+export enum MatchTeam {
+    Blue = "blue",
+    Red = "red",
+    None = "none",
+}
+
 export class osuApiV2 {
 
     static async fetchUser(user?: string, accessToken?: string, gameMode?: string): Promise<unknown> {
