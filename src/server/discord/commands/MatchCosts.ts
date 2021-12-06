@@ -101,10 +101,12 @@ export default <Command>{
                     }
                     let countPlayer = 0;
                     let sumScores = 0;
+                    const scores: number[] = [];
 
                     for (const score of event.game.scores) {
                         countPlayer++;
                         sumScores += score.score;
+                        scores.push(score.score);
                         teamScore[score.match.team as "blue" | "red" | "none"] += score.score;
                         userStats.push({
                             userID: score.user_id,
@@ -142,6 +144,7 @@ export default <Command>{
 
                     for (const s of userStats.filter(u => u.mapID === event.game.beatmap.beatmapset_id)) {
                         s.calculatedValue = s.score / (sumScores / countPlayer);
+                        s.calculatedValue2 = s.score / median(scores);
                     }
                     totalGames++;
                 }
@@ -166,11 +169,8 @@ export default <Command>{
                 }
                     
                 case "flashlight": {
-                    return {
-                        message: {
-                            content: `${formula} formula hasn't yet been implemented`
-                        }
-                    }
+                    matchCost = matchCostsFlashlight(userStats, userList);
+                    break;
                 }
             }
 
@@ -267,12 +267,55 @@ function matchCostsBathBot(userStats: OUserStatsSchema[], userList: OUserListSch
     return matchCost;
 }
 
+function matchCostsFlashlight(userStats: OUserStatsSchema[], userList: OUserListSchema[]) {
+    const matchCost: OMatchCostsSchema[] = [];
+    const plays: number[] = [];
+
+    userList.forEach(user => {
+        const scores = userStats.filter(u => u.userID === user.userID);
+        plays.push(scores.length);
+    });
+
+    userList.forEach(user => {
+        const scores = userStats.filter(u => u.userID === user.userID);
+        let scoresCalculation = 0;
+        let team: "blue" | "red" | "none";
+
+        scores.forEach(score => {
+            scoresCalculation += score.calculatedValue2;
+            team = score.team;
+        });
+
+        matchCost.push({
+            userID: user.userID,
+            username: user.username,
+            team: team,
+            value: (scoresCalculation / scores.length) * Math.cbrt(scores.length / median(plays)),
+            isMVP: false
+        });
+    });
+    return matchCost;
+}
+
+function median(numbers: number[]) {
+    const sorted = numbers.slice().sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+
+    if (sorted.length % 2 === 0) {
+        return (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+
+    return sorted[middle];
+}
+
+
 interface OUserStatsSchema {
     userID: number,
     mapID: number,
     score: number,
     team: "blue" | "red" | "none",
-    calculatedValue?: number
+    calculatedValue?: number,
+    calculatedValue2?: number,
     participation?: number
 }
 
