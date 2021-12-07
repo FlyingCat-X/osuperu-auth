@@ -1,5 +1,5 @@
 import { Command, CommandReturn } from "../models/ICommands";
-import { MatchEventType, MatchTeam, MatchTeamType, OMatchesSchema, osuApiV2 as osuApi, OUserSchema2 } from "../../OsuApiV2";
+import { MatchEventType, MatchTeam, MatchTeamType, OMatchesSchema, OMatchEventSchema, osuApiV2 as osuApi, OUserSchema2 } from "../../OsuApiV2";
 
 /**
  * While I was implementing the BathBot formula, I found a difference between the formula and its implementation in the BathBot (osuplus) code. 
@@ -84,69 +84,88 @@ export default <Command>{
             let totalGames = 0;
             let isTeamVersus = null;
 
+            const onlyGameEvents: OMatchEventSchema[] = [];
+
             for (const event of match.events) {
+                if (Object.prototype.hasOwnProperty.call(event, "game")) {
+                    onlyGameEvents.push(event);
+                }
+            }
+
+            for (const indexEvent in onlyGameEvents) {
                 const teamScore: OMatchResultSchema = {
                     blue: 0,
                     red: 0,
                     none: 0
                 };
-                if (Object.prototype.hasOwnProperty.call(event, "game")) {
-                    if (isTeamVersus === null) {
-                        if (event.game.team_type === MatchTeamType.TeamVS) {
-                            isTeamVersus = true;
-                        } else {
-                            isTeamVersus = false;
-                        }
+                
+                if (isTeamVersus === null) {
+                    if (onlyGameEvents[indexEvent].game.team_type === MatchTeamType.TeamVS) {
+                        isTeamVersus = true;
+                    } else {
+                        isTeamVersus = false;
                     }
-                    let countPlayer = 0;
-                    let sumScores = 0;
-                    const scores: number[] = [];
+                }
+                let countPlayer = 0;
+                let tbCountPlayer = 0;
+                let sumScores = 0;
+                let tbSumScores = 0;
+                const scores: number[] = [];
 
-                    for (const score of event.game.scores) {
-                        countPlayer++;
-                        sumScores += score.score;
-                        scores.push(score.score);
-                        teamScore[score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None] += score.score;
-                        userStats.push({
-                            userID: score.user_id,
-                            mapID: event.game.beatmap.beatmapset_id,
-                            score: score.score,
-                            team: score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None
-                        });
+                for (const score of onlyGameEvents[indexEvent].game.scores) {
+                    countPlayer++;
+                    sumScores += score.score;
+                    if (Number(indexEvent) === onlyGameEvents.length - 1) {
+                        tbCountPlayer++;
+                        tbSumScores += score.score;
+                    }
+                    scores.push(score.score);
+                    teamScore[score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None] += score.score;
+                    userStats.push({
+                        userID: score.user_id,
+                        mapID: onlyGameEvents[indexEvent].game.beatmap.beatmapset_id,
+                        score: score.score,
+                        tbScore: (Number(indexEvent) === onlyGameEvents.length - 1) ? score.score : 0,
+                        team: score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None
+                    });
+                    
+                    const tempMods = score.mods.filter(e => e !== "NF");
+                    if (userList.map(u => u.userID).indexOf(score.user_id) === -1) {
+                        const tempSetMods = new Set<string>();
+                        tempSetMods.add(""); // Workaround, related to the TODO at the beginning
                         
-                        const tempMods = score.mods.filter(e => e !== "NF");
-                        if (userList.map(u => u.userID).indexOf(score.user_id) === -1) {
-                            const tempSetMods = new Set<string>();
-                            tempSetMods.add(""); // Workaround, related to the TODO at the beginning
-                            
-                            if (tempMods.length > 0) {
-                                tempSetMods.add(tempMods.join(","));
-                            }
+                        if (tempMods.length > 0) {
+                            tempSetMods.add(tempMods.join(","));
+                        }
 
-                            const osuData = (await osuApi.fetchUserPublic(
-                                score.user_id.toString(),
-                                "osu"
-                            )) as OUserSchema2;
+                        const osuData = (await osuApi.fetchUserPublic(
+                            score.user_id.toString(),
+                            "osu"
+                        )) as OUserSchema2;
 
-                            userList.push({
-                                userID: score.user_id,
-                                username: (osuData) ? osuData.username : null,
-                                modCombination: tempSetMods
-                            });
-                        } else {
-                            const index = userList.map(u => u.userID).indexOf(score.user_id);
-                            if (tempMods.length > 0) {
-                                userList[index].modCombination.add(tempMods.join(","));
-                            }
+                        userList.push({
+                            userID: score.user_id,
+                            username: (osuData) ? osuData.username : null,
+                            modCombination: tempSetMods
+                        });
+                    } else {
+                        const index = userList.map(u => u.userID).indexOf(score.user_id);
+                        if (tempMods.length > 0) {
+                            userList[index].modCombination.add(tempMods.join(","));
                         }
                     }
+                }
 
-                    for (const s of userStats.filter(u => u.mapID === event.game.beatmap.beatmapset_id)) {
+                    for (const s of userStats.filter(u => u.mapID === onlyGameEvents[indexEvent].game.beatmap.beatmapset_id)) {
                         s.calculatedValue = s.score / (sumScores / countPlayer);
                         s.calculatedValue2 = s.score / median(scores);
+
+                        if (Number(indexEvent) === onlyGameEvents.length - 1) {
+                            s.tbCalculatedValue = s.tbScore / (tbSumScores / tbCountPlayer);
+                        }
                     }
                     totalGames++;
-                }
+                
 
                 if (teamScore.blue > teamScore.red) {
                     teamResults.blue++;
@@ -158,17 +177,28 @@ export default <Command>{
             let matchCost: OMatchCostsSchema[] = [];
             switch (formula) {
                 case "osuplus": {
-                    matchCost = matchCostsOsuplus(userStats, userList);
+                    matchCost = matchCostsOsuplus(
+                        userStats,
+                        userList
+                    );
                     break;
                 }
                     
                 case "bathbot": {
-                    matchCost = matchCostsBathBot(userStats, userList, totalGames);
+                    matchCost = matchCostsBathBot(
+                        userStats,
+                        userList,
+                        (teamResults.blue === teamResults.red - 1 || teamResults.red === teamResults.blue - 1),
+                        totalGames
+                    );
                     break;
                 }
                     
                 case "flashlight": {
-                    matchCost = matchCostsFlashlight(userStats, userList);
+                    matchCost = matchCostsFlashlight(
+                        userStats,
+                        userList
+                    );
                     break;
                 }
             }
@@ -242,14 +272,18 @@ function matchCostsOsuplus(userStats: OUserStatsSchema[], userList: OUserListSch
     return matchCost;
 }
 
-function matchCostsBathBot(userStats: OUserStatsSchema[], userList: OUserListSchema[], totalGames: number) {
+function matchCostsBathBot(userStats: OUserStatsSchema[], userList: OUserListSchema[], tiebreaker: boolean, totalGames: number) {
     const matchCost: OMatchCostsSchema[] = [];
     userList.forEach(user => {
         const scores = userStats.filter(u => u.userID === user.userID);
         let scoresCalculation = 0;
+        let tbScoreCalculation = 0;
         let team: MatchTeam.Blue | MatchTeam.Red | MatchTeam.None;
 
         scores.forEach(score => {
+            if (tiebreaker) {
+                tbScoreCalculation = (score.tbCalculatedValue) ? score.tbCalculatedValue : 0;
+            }
             scoresCalculation += score.calculatedValue;
             team = score.team;
         });
@@ -263,7 +297,7 @@ function matchCostsBathBot(userStats: OUserStatsSchema[], userList: OUserListSch
             userID: user.userID,
             username: user.username,
             team: team,
-            value: (scoresCalculation + participationBonus) * average * participationBonus2 * modCombBonus,
+            value: (scoresCalculation + participationBonus + tbScoreCalculation) * average * participationBonus2 * modCombBonus,
             isMVP: false
         });
     })
@@ -316,9 +350,11 @@ interface OUserStatsSchema {
     userID: number,
     mapID: number,
     score: number,
+    tbScore?: number,
     team: MatchTeam.Blue | MatchTeam.Red | MatchTeam.None,
     calculatedValue?: number,
     calculatedValue2?: number,
+    tbCalculatedValue?: number,
     participation?: number
 }
 
