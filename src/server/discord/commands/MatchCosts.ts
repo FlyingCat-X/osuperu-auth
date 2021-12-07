@@ -41,6 +41,7 @@ export default <Command>{
         try {
             const regexp = /((http|https):\/\/(osu|old).ppy.sh\/(community\/matches|mp)\/)?(\d+)/g;
             const matchID = interaction.options.getString("matchid");
+            const warmups = interaction.options.getInteger("warmups") | 0;
             const formula = (interaction.options.getString("formula", false) || "bathbot") as "osuplus" | "bathbot" | "flashlight";
             const regexMatch = regexp.exec(matchID);
 
@@ -106,55 +107,56 @@ export default <Command>{
                         isTeamVersus = false;
                     }
                 }
-                let countPlayer = 0;
-                let tbCountPlayer = 0;
-                let sumScores = 0;
-                let tbSumScores = 0;
-                const scores: number[] = [];
+                if (Number(indexEvent) >= warmups) {
+                    let countPlayer = 0;
+                    let tbCountPlayer = 0;
+                    let sumScores = 0;
+                    let tbSumScores = 0;
+                    const scores: number[] = [];
 
-                for (const score of onlyGameEvents[indexEvent].game.scores) {
-                    countPlayer++;
-                    sumScores += score.score;
-                    if (Number(indexEvent) === onlyGameEvents.length - 1) {
-                        tbCountPlayer++;
-                        tbSumScores += score.score;
-                    }
-                    scores.push(score.score);
-                    teamScore[score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None] += score.score;
-                    userStats.push({
-                        userID: score.user_id,
-                        mapID: onlyGameEvents[indexEvent].game.beatmap.beatmapset_id,
-                        score: score.score,
-                        tbScore: (Number(indexEvent) === onlyGameEvents.length - 1) ? score.score : 0,
-                        team: score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None
-                    });
-                    
-                    const tempMods = score.mods.filter(e => e !== "NF");
-                    if (userList.map(u => u.userID).indexOf(score.user_id) === -1) {
-                        const tempSetMods = new Set<string>();
-                        tempSetMods.add(""); // Workaround, related to the TODO at the beginning
-                        
-                        if (tempMods.length > 0) {
-                            tempSetMods.add(tempMods.join(","));
+                    for (const score of onlyGameEvents[indexEvent].game.scores) {
+                        countPlayer++;
+                        sumScores += score.score;
+                        if (Number(indexEvent) === onlyGameEvents.length - 1) {
+                            tbCountPlayer++;
+                            tbSumScores += score.score;
                         }
-
-                        const osuData = (await osuApi.fetchUserPublic(
-                            score.user_id.toString(),
-                            "osu"
-                        )) as OUserSchema2;
-
-                        userList.push({
+                        scores.push(score.score);
+                        teamScore[score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None] += score.score;
+                        userStats.push({
                             userID: score.user_id,
-                            username: (osuData) ? osuData.username : null,
-                            modCombination: tempSetMods
+                            mapID: onlyGameEvents[indexEvent].game.beatmap.beatmapset_id,
+                            score: score.score,
+                            tbScore: (Number(indexEvent) === onlyGameEvents.length - 1) ? score.score : 0,
+                            team: score.match.team as MatchTeam.Blue | MatchTeam.Red | MatchTeam.None
                         });
-                    } else {
-                        const index = userList.map(u => u.userID).indexOf(score.user_id);
-                        if (tempMods.length > 0) {
-                            userList[index].modCombination.add(tempMods.join(","));
+                        
+                        const tempMods = score.mods.filter(e => e !== "NF");
+                        if (userList.map(u => u.userID).indexOf(score.user_id) === -1) {
+                            const tempSetMods = new Set<string>();
+                            tempSetMods.add(""); // Workaround, related to the TODO at the beginning
+                            
+                            if (tempMods.length > 0) {
+                                tempSetMods.add(tempMods.join(","));
+                            }
+
+                            const osuData = (await osuApi.fetchUserPublic(
+                                score.user_id.toString(),
+                                "osu"
+                            )) as OUserSchema2;
+
+                            userList.push({
+                                userID: score.user_id,
+                                username: (osuData) ? osuData.username : null,
+                                modCombination: tempSetMods
+                            });
+                        } else {
+                            const index = userList.map(u => u.userID).indexOf(score.user_id);
+                            if (tempMods.length > 0) {
+                                userList[index].modCombination.add(tempMods.join(","));
+                            }
                         }
                     }
-                }
 
                     for (const s of userStats.filter(u => u.mapID === onlyGameEvents[indexEvent].game.beatmap.beatmapset_id)) {
                         s.calculatedValue = s.score / (sumScores / countPlayer);
@@ -165,7 +167,7 @@ export default <Command>{
                         }
                     }
                     totalGames++;
-                
+                }
 
                 if (teamScore.blue > teamScore.red) {
                     teamResults.blue++;
