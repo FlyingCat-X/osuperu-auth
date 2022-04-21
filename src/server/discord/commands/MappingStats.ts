@@ -75,7 +75,7 @@ export default <Command>{
                                     "▸ **Graveyarded maps: **" + ret.graveyard_beatmapset_count + "\n" +
                                     "▸ **Pending maps: **" + ret.pending_beatmapset_count + "\n" +
                                     "▸ **Loved maps: **" + ret.loved_beatmapset_count + "\n" +
-                                    "▸ **Ranked and approved maps: **" + ret.ranked_and_approved_beatmapset_count + "\n",
+                                    "▸ **Ranked and approved maps: **" + ret.ranked_and_approved_beatmapset_count + " (" + ret.guest_beatmapset_count + " GD)\n",
                                 footer: {
                                     text: `Kudosu available: ${ret.kudosu.available}/${ret.kudosu.total}`
                                 }

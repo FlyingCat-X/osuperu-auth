@@ -38,6 +38,7 @@ export interface OUserSchema2 {
     statistics: OUserStatisticsSchema,
     previous_usernames: string[],
     graveyard_beatmapset_count: number,
+    guest_beatmapset_count: number,
     loved_beatmapset_count: number,
     pending_beatmapset_count: number,
     ranked_and_approved_beatmapset_count: number,
