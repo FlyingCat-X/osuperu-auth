@@ -49,7 +49,10 @@ export class CommandManager extends BaseManager {
             this.initializedCommands.splice(existingAppCommandIndex, 1);
         }
 
-        const appCommand = await App.instance.discordClient.discordGuild.commands.create(command);
+        const appCommand = await App.instance.discordClient.discordGuild.commands.create({
+            ...command,
+            // default_member_permissions: !command.defaultPermission ? "0" : undefined // Waiting this to be implemented
+        });
         appCommand["commandEnum"] = command.commandEnum;
         this.initializedCommands.push(appCommand);
 
@@ -60,23 +63,20 @@ export class CommandManager extends BaseManager {
         await interaction.deferReply();
 
         const command = this.commands.find(command => command.name === interaction.commandName);
-
-        // Hardcoded until discord implements the use of slash commands only in certain channels
-        if ((interaction.commandName === "mappingstats" && interaction.channelId === App.instance.config.discord.mapperCommandsWhitelist)
-                || (interaction.channelId !== App.instance.config.discord.mapperCommandsWhitelist)) {
-            const commandReturn = await command.call({ interaction });
-
-            interaction.editReply(commandReturn.message);
-    
-            if(commandReturn.edit_promise) {
-                Promise.resolve(commandReturn.edit_promise).then(edit => {
-                    interaction.editReply(edit.message);
-                })
-            }
-        } else {
-            interaction.editReply("You cannot use this command in this channel");
+        if (!command.defaultPermission && !command.permissions.includes(interaction.user.id)) {
+            await interaction.editReply("You aren't permitted to use this command!");
+            return;
         }
-        
+
+        const commandReturn = await command.call({ interaction });
+
+        interaction.editReply(commandReturn.message);
+
+        if(commandReturn.edit_promise) {
+            Promise.resolve(commandReturn.edit_promise).then(edit => {
+                interaction.editReply(edit.message);
+            })
+        }
     }
 
     getAppCommand(commandEnum: string): ApplicationCommand {
