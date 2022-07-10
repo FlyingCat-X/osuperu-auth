@@ -1,5 +1,7 @@
 # osu!Perú Auth
 
+[New project!](https://github.com/osuperu/osu-peru-bot)
+
 Fork based on osu!Turkey Auth System.
 [Original project (Thank you Coderbora<3)](https://github.com/Coderbora/osuturkiye)
 
